@@ -9,7 +9,7 @@ In your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-ternwire = "0.1"
+ternwire = "0.2"
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
