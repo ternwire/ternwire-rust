@@ -1,0 +1,24 @@
+[package]
+name = "ternwire"
+version = "0.1.0"
+edition = "2021"
+description = "Async Rust client for the Ternwire transactional email API"
+readme = "README.md"
+homepage = "https://ternwire.com"
+documentation = "https://docs.rs/ternwire"
+license = "MIT"
+keywords = ["email", "transactional", "ternwire", "api", "webhooks"]
+categories = ["email", "api-bindings", "web-programming::http-client"]
+include = ["src/**", "examples/**", "Cargo.toml", "README.md", "LICENSE"]
+
+[dependencies]
+reqwest = { version = "0.12.24", default-features = false, features = ["json", "rustls-tls"] }
+serde_json = "1"
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+regex = "1"
+thiserror = "2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
