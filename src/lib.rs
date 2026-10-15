@@ -26,6 +26,9 @@ pub enum Error {
     InvalidResponse,
 }
 
+/// The production API origin, used by [`Client::from_api_key`].
+pub const DEFAULT_BASE_URL: &str = "https://ternwire.com";
+
 #[derive(Clone)]
 pub struct Client {
     http: reqwest::Client,
@@ -45,6 +48,18 @@ fn is_loopback_host(host: &str) -> bool {
 }
 
 impl Client {
+    /// Builds a client for the production API at [`DEFAULT_BASE_URL`].
+    ///
+    /// ```
+    /// let client = ternwire::Client::from_api_key("em_test_example")?;
+    /// let local = ternwire::Client::new("em_test_example", "http://localhost:3001")?;
+    /// # Ok::<(), ternwire::Error>(())
+    /// ```
+    pub fn from_api_key(api_key: impl Into<String>) -> Result<Self, Error> {
+        Self::new(api_key, DEFAULT_BASE_URL)
+    }
+
+    /// Builds a client for the API at `base_url`, such as a local or staging origin.
     pub fn new(api_key: impl Into<String>, base_url: &str) -> Result<Self, Error> {
         Self::with_timeout(api_key, base_url, Duration::from_secs(30))
     }
@@ -176,7 +191,7 @@ impl Client {
     }
     // END GENERATED OPERATIONS
 
-    async fn request(&self, method: Method, path: &str, expected_status: u16, body: Option<&Value>, idempotency_key: Option<&str>) -> Result<Value, Error> {
+    fn build_request(&self, method: Method, path: &str, body: Option<&Value>, idempotency_key: Option<&str>) -> Result<reqwest::Request, Error> {
         let mut request = self.http.request(method, format!("{}{path}", self.base_url))
             .bearer_auth(&self.api_key).header("accept", "application/json");
         if let Some(key) = idempotency_key {
@@ -191,7 +206,11 @@ impl Client {
             }
             request = request.json(body);
         }
-        let response = request.send().await?;
+        Ok(request.build()?)
+    }
+
+    async fn request(&self, method: Method, path: &str, expected_status: u16, body: Option<&Value>, idempotency_key: Option<&str>) -> Result<Value, Error> {
+        let response = self.http.execute(self.build_request(method, path, body, idempotency_key)?).await?;
         let status = response.status().as_u16();
         let headers = response.headers().clone();
         let raw_body = response.text().await?;
@@ -266,6 +285,14 @@ mod tests {
         ] {
             assert!(Client::new(API_KEY, base_url).is_ok(), "{base_url}");
         }
+    }
+
+    #[test]
+    fn default_origin_unless_one_is_passed() {
+        let target = |client: Client| client.build_request(Method::GET, "/v1/templates", None, None).unwrap().url().to_string();
+        assert_eq!(target(Client::from_api_key(API_KEY).unwrap()), "https://ternwire.com/v1/templates");
+        assert_eq!(target(Client::new(API_KEY, "http://localhost:3001").unwrap()), "http://localhost:3001/v1/templates");
+        assert!(matches!(Client::new(API_KEY, ""), Err(Error::InvalidInput(_))));
     }
 
     #[tokio::test]

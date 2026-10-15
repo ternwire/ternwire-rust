@@ -20,7 +20,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 use serde_json::json;
 use ternwire::Client;
 
-let client = Client::new(api_key, api_origin)?;
+let client = Client::from_api_key(api_key)?;
 let message = client.submit_email(&json!({
     "from": "notifications@your-verified-domain.com",
     "to": ["recipient@example.com"],
@@ -32,10 +32,18 @@ let message = client.submit_email(&json!({
 Use inside an async function returning a compatible `Result`. The complete
 `examples/send.rs` supplies the runtime and environment configuration.
 
+The client sends requests to `ternwire::DEFAULT_BASE_URL` (`https://ternwire.com`).
+To target a local or staging API instead, pass its origin:
+
+```rust
+let client = Client::new(api_key, "http://localhost:3001")?;
+```
+
 All 17 operations use snake_case and return `Result<serde_json::Value, ternwire::Error>`.
 Bodies must be JSON objects with the API's camelCase fields. Template deletion
 returns `Value::Null`. The client can be cloned and reused. Use
-`Client::with_timeout(api_key, api_origin, duration)` to override the 30-second timeout.
+`Client::with_timeout(api_key, ternwire::DEFAULT_BASE_URL, duration)` to override the
+30-second timeout.
 `list_email_templates(cursor: Option<&str>, limit: Option<u32>)` returns one page of
 summaries; pass the previous `page.nextCursor` as `cursor` to fetch the next page.
 
@@ -51,10 +59,10 @@ let valid = ternwire::verify_webhook(
 );
 ```
 
-To run the example later, set `TERNWIRE_API_KEY`, `TERNWIRE_API_ORIGIN`,
-`TERNWIRE_FROM`, and `TERNWIRE_TO`, then run `cargo run --example send`.
-It submits an email.
+To run the example later, set `TERNWIRE_API_KEY`, `TERNWIRE_FROM`, and `TERNWIRE_TO`,
+then run `cargo run --example send`. It submits an email. Set `TERNWIRE_API_ORIGIN`
+only to target a local or staging API, such as `http://localhost:3001`.
 
-Use `https://ternwire.com` as the API origin. Read the full documentation at
-[ternwire.com/docs](https://ternwire.com/docs), or contact support@ternwire.com.
+Read the full documentation at [ternwire.com/docs](https://ternwire.com/docs), or
+contact support@ternwire.com.
 Released under the MIT License.
