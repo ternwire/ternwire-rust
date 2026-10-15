@@ -5,6 +5,7 @@ edition = "2021"
 description = "Async Rust client for the Ternwire transactional email API"
 readme = "README.md"
 homepage = "https://ternwire.com"
+repository = "https://github.com/ternwire/ternwire-rust"
 documentation = "https://docs.rs/ternwire"
 license = "MIT"
 keywords = ["email", "transactional", "ternwire", "api", "webhooks"]
